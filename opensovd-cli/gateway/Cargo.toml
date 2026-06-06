@@ -30,9 +30,13 @@ libcli = { workspace = true }
 opensovd-server = { workspace = true }
 opensovd-core = { workspace = true }
 opensovd-extra = { workspace = true, features = ["auth"] }
+opensovd-client = { workspace = true }
+opensovd-models = { workspace = true }
+opensovd-providers = { workspace = true }
 opensovd-mocks = { workspace = true, optional = true }
 schemars = { workspace = true, optional = true }
 serde = { workspace = true, features = ["derive"] }
+async-trait = { workspace = true }
 tokio = { workspace = true, features = ["net", "rt", "signal", "time", "sync"] }
 base64 = { workspace = true }
 http = { workspace = true }
