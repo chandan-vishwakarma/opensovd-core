@@ -5,6 +5,9 @@
 
 mod cli;
 mod cors;
+mod signal_backend;
+mod simulator_backend;
+mod simulator_topology;
 mod serve_dir;
 
 use std::process::ExitCode;
@@ -125,7 +128,7 @@ where
         .authorizer(authorizer);
 
     builder = configure_listener(builder, &cli, authority).await?;
-    builder = configure_topology(builder, &cli).await;
+    builder = configure_topology(builder, &cli).await?;
 
     #[cfg(feature = "tls")]
     {
@@ -229,19 +232,32 @@ async fn configure_listener<Vendor, Authn, Authz, Layer>(
 async fn configure_topology<Vendor, Authn, Authz, Layer>(
     builder: opensovd_server::ServerBuilder<Vendor, Authn, Authz, Layer>,
     cli: &cli::Cli,
-) -> opensovd_server::ServerBuilder<Vendor, Authn, Authz, Layer> {
-    #[cfg(feature = "mock")]
-    let topology = if cli.mock {
-        tracing::info!(target: TARGET, "Mock topology enabled");
-        create_mock_topology().await
+) -> anyhow::Result<opensovd_server::ServerBuilder<Vendor, Authn, Authz, Layer>> {
+    let topology = if let Some(simulator_url) = &cli.simulator_url {
+        tracing::info!(
+            target: TARGET,
+            %simulator_url,
+            "HPC2 simulator topology enabled"
+        );
+        simulator_topology::create_hpc2_simulator_topology(simulator_url).await?
     } else {
-        Topology::default()
+        #[cfg(feature = "mock")]
+        {
+            if cli.mock {
+                tracing::info!(target: TARGET, "Mock topology enabled");
+                create_mock_topology().await
+            } else {
+                Topology::default()
+            }
+        }
+
+        #[cfg(not(feature = "mock"))]
+        {
+            Topology::default()
+        }
     };
 
-    #[cfg(not(feature = "mock"))]
-    let topology = Topology::default();
-
-    builder.topology(topology)
+    Ok(builder.topology(topology))
 }
 
 fn notify_readiness() {

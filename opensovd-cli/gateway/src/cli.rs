@@ -38,6 +38,9 @@ Examples:
 
   # Listen on an abstract Unix socket
   opensovd-gateway --unix-socket @opensovd
+
+  # Expose all HPC2 simulator-backed components
+  opensovd-gateway --simulator-url http://127.0.0.1:9100
 ")]
 pub struct Cli {
     /// Server URL including base URI path (e.g., http://host:port/path).
@@ -69,6 +72,14 @@ pub struct Cli {
     #[cfg(feature = "mock")]
     #[arg(long)]
     pub mock: bool,
+
+    /// Enable the HPC2 simulator backend.
+    ///
+    /// This builds the SOVD topology from the same component/resource contract
+    /// that was used by the old simulator mapping, while reading values from
+    /// the standalone simulator HTTP API.
+    #[arg(long, value_name = "URL", help_heading = "Options")]
+    pub simulator_url: Option<String>,
 
     /// Serve static files from a directory.
     /// Format: PATH:DIRECTORY (e.g., "/ui:./webui/dist")
